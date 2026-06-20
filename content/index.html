@@ -2,10 +2,53 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>My YouTube Video Feed</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My YouTube Video Hub</title>
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; background: #f9f9f9; color: #333; }
+        h1 { border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        .video-card { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .video-container { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; margin-top: 15px; }
+        .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 4px; }
+        .date { color: #666; font-size: 0.9rem; }
+    </style>
 </head>
 <body>
     <h1>Latest Videos</h1>
-    <p>Check the posts folder for video markdown files.</p>
+    <div id="video-feed">Loading videos...</div>
+
+    <script>
+        // Dynamically fetch the index.json manifest created by our Python script
+        async function loadVideos() {
+            try {
+                const res = await fetch('./posts/index.json');
+                const videos = await res.json();
+                const feed = document.getElementById('video-feed');
+                feed.innerHTML = '';
+
+                if(videos.length === 0) {
+                    feed.innerHTML = '<p>No videos found.</p>';
+                    return;
+                }
+
+                videos.forEach(vid => {
+                    const card = document.createElement('div');
+                    card.className = 'video-card';
+                    card.innerHTML = `
+                        <h2>${vid.title}</h2>
+                        <div class="date">Published on: ${vid.date}</div>
+                        <p>${vid.description}</p>
+                        <div class="video-container">
+                            <iframe src="https://youtube.com{vid.id}" frameborder="0" allowfullscreen></iframe>
+                        </div>
+                    `;
+                    feed.appendChild(card);
+                });
+            } catch (err) {
+                document.getElementById('video-feed').innerText = 'Failed to load video feed.';
+            }
+        }
+        loadVideos();
+    </script>
 </body>
 </html>
