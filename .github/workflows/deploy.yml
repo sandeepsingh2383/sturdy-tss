@@ -1,12 +1,15 @@
-name: Fetch YouTube Videos and Deploy to Cloudflare
+name: Fetch YouTube Videos and Trigger Cloudflare
 
 on:
   schedule:
     - cron: '0 0 * * *' # Runs every day at midnight UTC
   workflow_dispatch: # Allows you to trigger it manually from the GitHub UI
 
+permissions:
+  contents: write # Essential to allow the runner to push changes back to your repo
+
 jobs:
-  build-and-deploy:
+  fetch-and-sync:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -24,29 +27,14 @@ jobs:
       - name: Run Video Fetcher Script
         env:
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
-          YOUTUBE_CHANNEL_ID: ${{ secrets.YOUTUBE_CHANNEL_ID }} # Put your channel ID here
+          YOUTUBE_CHANNEL_ID: ${{ secrets.YOUTUBE_CHANNEL_ID }}
         run: python generate_posts.py
 
-      # OPTIONAL: Commit the generated markdown files back to your repo
-      - name: Commit changes
+      # This step saves the new files. Cloudflare detects this push instantly.
+      - name: Commit and Push Generated Content
         run: |
           git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@://github.com'
-          git add content/posts/*.md || true
-          git commit -m "Automated update: Added latest YouTube videos" || true
-          git push || true
-
-      # Build step for your static site generator (e.g., Hugo, Jekyll, Eleventy)
-      # Remove or modify this step if you are deploying raw HTML/JS
-      - name: Build Site
-        run: |
-          echo "Run your static site build command here if needed (e.g., npx @11ty/eleventy or hugo)"
-          # If your files are just raw HTML/Markdown, you can target that directory directly
-
-      - name: Deploy to Cloudflare Pages
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          # Pass both the directory and the project name in a single command line
-          command: pages deploy content --project-name="sturdy-tss" --commit-dirty=true
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add content/
+          git commit -m "Automated update: Synced latest YouTube feeds" || echo "No new updates found"
+          git push
