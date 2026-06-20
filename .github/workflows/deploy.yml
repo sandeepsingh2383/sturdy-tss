@@ -28,7 +28,11 @@ jobs:
         env:
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
           YOUTUBE_CHANNEL_ID: ${{ secrets.YOUTUBE_CHANNEL_ID }}
-        run: python generate_posts.py
+        # This bash script cleans whitespaces/newlines out before launching Python
+        run: |
+          CLEAN_KEY=$(echo "$YOUTUBE_API_KEY" | tr -d '\r\n[:space:]')
+          CLEAN_ID=$(echo "$YOUTUBE_CHANNEL_ID" | tr -d '\r\n[:space:]')
+          YOUTUBE_API_KEY=$CLEAN_KEY YOUTUBE_CHANNEL_ID=$CLEAN_ID python generate_posts.py
 
       # This step saves the new files. Cloudflare detects this push instantly.
       - name: Commit and Push Generated Content
