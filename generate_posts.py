@@ -6,13 +6,14 @@ API_KEY = os.environ.get("YOUTUBE_API_KEY")
 CHANNEL_ID = os.environ.get("YOUTUBE_CHANNEL_ID")
 
 def fetch_videos():
-    # Debug: Check if variables are loaded
     if not API_KEY:
         print("❌ Error: YOUTUBE_API_KEY environment variable is empty!")
     if not CHANNEL_ID:
         print("❌ Error: YOUTUBE_CHANNEL_ID environment variable is empty!")
 
+    # Explicit base URL endpoint path string
     url = "https://googleapis.com"
+    
     params = {
         "key": API_KEY.strip() if API_KEY else "",
         "channelId": CHANNEL_ID.strip() if CHANNEL_ID else "",
@@ -21,9 +22,9 @@ def fetch_videos():
         "maxResults": 15
     }
     
+    print(f"Requesting YouTube Feed for Channel: {CHANNEL_ID}")
     raw_response = requests.get(url, params=params)
     
-    # Check for HTTP errors before parsing JSON
     if raw_response.status_code != 200:
         print(f"❌ Google API Error (Status {raw_response.status_code}):")
         print(raw_response.text)
@@ -47,7 +48,7 @@ def fetch_videos():
         if item["id"]["kind"] == "youtube#video":
             video_id = item["id"]["videoId"]
             title = item["snippet"]["title"]
-            date = item["snippet"]["publishedAt"].split("T")[0]
+            date = item["snippet"]["publishedAt"].split("T")[0] # Clean date layout
             description = item["snippet"]["description"]
             
             video_manifest.append({
