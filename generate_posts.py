@@ -12,7 +12,7 @@ def fetch_videos():
         print("❌ Error: YOUTUBE_CHANNEL_ID environment variable is empty!")
 
     # Explicit base URL endpoint path string
-    url = "https://googleapis.com"
+    url = "https://www.googleapis.com/youtube/v3/search"
     
     params = {
         "key": API_KEY.strip() if API_KEY else "",
