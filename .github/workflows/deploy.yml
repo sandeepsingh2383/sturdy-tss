@@ -48,4 +48,5 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          # Pass both the directory and the project name in a single command line
           command: pages deploy content --project-name="sturdy-tss" --commit-dirty=true
