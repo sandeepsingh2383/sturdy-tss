@@ -1,36 +1,41 @@
 import os
 import requests
-import json
 
 # Load environment variables
 API_KEY = os.environ.get("YOUTUBE_API_KEY")
-CHANNEL_ID = os.environ.get("YOUTUBE_CHANNEL_ID") # Add your channel ID here or as a secret
+CHANNEL_ID = os.environ.get("YOUTUBE_CHANNEL_ID")
 
 def fetch_videos():
-    url = f"https://googleapis.com{API_KEY}&channelId={CHANNEL_ID}&part=snippet,id&order=date&maxResults=10"
-    response = requests.get(url).json()
+    # Base URL remains untouched and safe from string formatting issues
+    url = "https://www.googleapis.com/youtube/v3/search"
+    
+    # Pass variables safely as URL parameters
+    params = {
+        "key": API_KEY.strip() if API_KEY else "", # Clean hidden spaces/newlines
+        "channelId": CHANNEL_ID.strip() if CHANNEL_ID else "",
+        "part": "snippet,id",
+        "order": "date",
+        "maxResults": 10
+    }
+    
+    # requests safely encodes the URL for you
+    response = requests.get(url, params=params).json()
     
     if "items" not in response:
         print("Error fetching videos:", response)
         return
 
-    # Create posts directory if it doesn't exist
     os.makedirs("content/posts", exist_ok=True)
 
     for item in response["items"]:
         if item["id"]["kind"] == "youtube#video":
             video_id = item["id"]["videoId"]
             title = item["snippet"]["title"]
-            date = item["snippet"]["publishedAt"].split("T")[0]
+            date = item["snippet"]["publishedAt"].split("T")[0] # Clean date string
             description = item["snippet"]["description"]
-            
-            # Check if it is a Short or Long-form video
-            # Shorts usually have shorts/ in URL or are vertical, but via API we check length or format
-            # For automation, we can embed them dynamically
             
             filename = f"content/posts/{video_id}.md"
             
-            # Generate Markdown file with Front Matter
             markdown_content = f"""---
 title: "{title}"
 date: {date}
