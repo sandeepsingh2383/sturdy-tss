@@ -1,0 +1,51 @@
+name: Fetch YouTube Videos and Deploy to Cloudflare
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # Runs every day at midnight UTC
+  workflow_dispatch: # Allows you to trigger it manually from the GitHub UI
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install Dependencies
+        run: |
+          pip install requests
+
+      - name: Run Video Fetcher Script
+        env:
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+          YOUTUBE_CHANNEL_ID: ${{ secrets.YOUTUBE_CHANNEL_ID }} # Put your channel ID here
+        run: python generate_posts.py
+
+      # OPTIONAL: Commit the generated markdown files back to your repo
+      - name: Commit changes
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@://github.com'
+          git add content/posts/*.md || true
+          git commit -m "Automated update: Added latest YouTube videos" || true
+          git push || true
+
+      # Build step for your static site generator (e.g., Hugo, Jekyll, Eleventy)
+      # Remove or modify this step if you are deploying raw HTML/JS
+      - name: Build Site
+        run: |
+          echo "Run your static site build command here if needed (e.g., npx @11ty/eleventy or hugo)"
+          # If your files are just raw HTML/Markdown, you can target that directory directly
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy content --project-name="your-cloudflare-pages-project-name"
