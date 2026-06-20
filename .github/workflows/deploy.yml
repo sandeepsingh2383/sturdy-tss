@@ -48,4 +48,4 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy content --project-name="your-cloudflare-pages-project-name"
+          command: pages deploy content --project-name="sturdy-tss"
