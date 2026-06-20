@@ -6,6 +6,12 @@ API_KEY = os.environ.get("YOUTUBE_API_KEY")
 CHANNEL_ID = os.environ.get("YOUTUBE_CHANNEL_ID")
 
 def fetch_videos():
+    # Debug: Check if variables are loaded
+    if not API_KEY:
+        print("❌ Error: YOUTUBE_API_KEY environment variable is empty!")
+    if not CHANNEL_ID:
+        print("❌ Error: YOUTUBE_CHANNEL_ID environment variable is empty!")
+
     url = "https://googleapis.com"
     params = {
         "key": API_KEY.strip() if API_KEY else "",
@@ -15,15 +21,26 @@ def fetch_videos():
         "maxResults": 15
     }
     
-    response = requests.get(url, params=params).json()
+    raw_response = requests.get(url, params=params)
     
-    if "items" not in response:
-        print("Error fetching videos:", response)
+    # Check for HTTP errors before parsing JSON
+    if raw_response.status_code != 200:
+        print(f"❌ Google API Error (Status {raw_response.status_code}):")
+        print(raw_response.text)
         return
 
-    # Ensure directories are ready
-    os.makedirs("content/posts", exist_ok=True)
+    try:
+        response = raw_response.json()
+    except Exception as e:
+        print("❌ Failed to parse JSON response. Raw output was:")
+        print(raw_response.text)
+        return
     
+    if "items" not in response:
+        print("❌ Error fetching videos:", response)
+        return
+
+    os.makedirs("content/posts", exist_ok=True)
     video_manifest = []
 
     for item in response["items"]:
@@ -33,25 +50,17 @@ def fetch_videos():
             date = item["snippet"]["publishedAt"].split("T")[0]
             description = item["snippet"]["description"]
             
-            # Save to unified memory index for our frontend template
             video_manifest.append({
                 "id": video_id,
                 "title": title,
                 "date": date,
                 "description": description
             })
-            
-            # Optional: Keep markdown file creation active for your archival records
-            filename = f"content/posts/{video_id}.md"
-            markdown_content = f"---\ntitle: \"{title}\"\ndate: {date}\nvideo_id: \"{video_id}\"\n---\n\n{description}"
-            with open(filename, "w", encoding="utf-8") as f:
-                f.write(markdown_content)
 
-    # Write out the JSON manifest file that index.html reads
     with open("content/posts/index.json", "w", encoding="utf-8") as json_file:
         json.dump(video_manifest, json_file, indent=4, ensure_ascii=False)
         
-    print(f"Successfully cataloged {len(video_manifest)} videos into metadata index.")
+    print(f"✅ Successfully cataloged {len(video_manifest)} videos.")
 
 if __name__ == "__main__":
     fetch_videos()
