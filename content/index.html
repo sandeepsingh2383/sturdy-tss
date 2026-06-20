@@ -21,7 +21,7 @@
         // Dynamically fetch the index.json manifest created by our Python script
         async function loadVideos() {
             try {
-                const res = await fetch('./posts/index.json');
+                const res = await fetch('posts/index.json');
                 const videos = await res.json();
                 const feed = document.getElementById('video-feed');
                 feed.innerHTML = '';
